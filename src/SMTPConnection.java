@@ -12,7 +12,11 @@ public class SMTPConnection {
 
     /* Streams for reading and writing the socket */ 
     private BufferedReader fromServer; 
-    private DataOutputStream toServer; 
+    //private DataOutputStream toServer; 
+    private PrintStream toServer; 
+    private String server = "smtp.tcnj.edu";
+    private int portNumber = 25;
+    private String hostname = "hostname"; // Change to proper hostname
 
     private static final int SMTP_PORT = 25; 
     private static final String CRLF = "\r\n"; 
@@ -23,24 +27,32 @@ public class SMTPConnection {
     /* Create an SMTPConnection object. Create the socket and the  
        associated streams. Initialize SMTP connection. */ 
     public SMTPConnection(Envelope envelope) throws IOException { 
-        // connection = /* Fill in */; 
-//        fromServer = /* Fill in */; 
-//        toServer =   /* Fill in */; 
+
+        // Attempt to connect to the server
+//        try {
+//        serverSocket = new Socket (server, portNumber); 
+//        fromServer = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()));
+//        toServer = new DataOutputStream(serverSocket.getOutputStream());
           // Temporary for troubleshooting
           fromServer = new BufferedReader(new InputStreamReader(System.in)); 
           toServer = System.out; 
+//        }
+//        catch (IOException e) {
+//            throw e;
+//        }
 
-
-        /* Fill in */ 
-        /* Read a line from server and check that the reply code is 220. 
-           If not, throw an IOException. */ 
-        /* Fill in */ 
+        // Check server reply
+        String serverReply = fromServer.readLine();
+        int replyCode = parseReply(serverReply);
+        if (replyCode != 220) {
+            throw new IOException();
+        }
 
         /* SMTP handshake. We need the name of the local machine. 
            Send the appropriate SMTP handshake command. */ 
-//        String localhost = /* Fill in */; 
-        sendCommand( /* Fill in */ ); 
-
+        
+        String localhost = hostname; 
+        sendCommand(("HELO" + localhost + CRLF), 250); 
         isConnected = true; 
     } 
 
@@ -66,7 +78,7 @@ public class SMTPConnection {
         // Message body
         String messageBody;
         // Add headers 
-        messageBody += "SUBJECT: " + envelope.Message.Headers;
+        messageBody = "SUBJECT: " + envelope.Message.Headers;
         // Add blank line
         messageBody += CRLF;
         // Add data from message
@@ -98,7 +110,8 @@ public class SMTPConnection {
         command += CRLF;
         
         // Send the command to the server
-        toServer.writeBytes(command);
+//        toServer.writeBytes(command);
+        toServer.print(command);
 
         // Get the reply code
         String reply = fromServer.readLine();
@@ -117,7 +130,7 @@ public class SMTPConnection {
     /* Parse the reply line from the server. Returns the reply code. */ 
     private int parseReply(String reply) { 
         StringTokenizer replyTokens = new StringTokenizer(reply);
-        String replyCodeString = tokens.nextToken(); // Get the first token 
+        String replyCodeString = replyTokens.nextToken(); // Get the first token 
         int replyCode = Integer.parseInt(replyCodeString); // Convert in to an Integer
         return replyCode;
     } 
