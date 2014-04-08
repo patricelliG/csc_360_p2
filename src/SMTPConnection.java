@@ -29,17 +29,17 @@ public class SMTPConnection {
     public SMTPConnection(Envelope envelope) throws IOException { 
 
         // Attempt to connect to the server
-//        try {
+        try {
 //        serverSocket = new Socket (server, portNumber); 
 //        fromServer = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()));
 //        toServer = new DataOutputStream(serverSocket.getOutputStream());
           // Temporary for troubleshooting
           fromServer = new BufferedReader(new InputStreamReader(System.in)); 
           toServer = System.out; 
-//        }
-//        catch (IOException e) {
-//            throw e;
-//        }
+        }
+        catch (Exception e) {
+            throw e;
+        }
 
         // Check server reply
         String serverReply = fromServer.readLine();
@@ -52,7 +52,7 @@ public class SMTPConnection {
            Send the appropriate SMTP handshake command. */ 
         
         String localhost = hostname; 
-        sendCommand(("HELO" + localhost + CRLF), 250); 
+        sendCommand(("HELO " + localhost + CRLF), 250); 
         isConnected = true; 
     } 
 
@@ -60,14 +60,10 @@ public class SMTPConnection {
        correct order. No checking for errors, just throw them to the 
        caller. */ 
     public void send(Envelope envelope) throws IOException { 
-        /* Fill in */ 
         /* Send all the necessary commands to send a message. Call 
            sendCommand() to do the dirty work. Do _not_ catch the 
            exception thrown from sendCommand(). */ 
-        /* Fill in */ 
         
-        // Greet
-        sendCommand("HELO",250);
         // Sender line
         sendCommand(("MAIL FROM: " + envelope.Sender), 250);
         // Recipient
@@ -106,6 +102,7 @@ public class SMTPConnection {
        what is is supposed to be according to RFC 821. */ 
     private void sendCommand(String command, int rc) throws IOException { 
 
+        System.out.println("Sending " + command);
         // Add the carridge return + line feed
         command += CRLF;
         
@@ -130,8 +127,16 @@ public class SMTPConnection {
     /* Parse the reply line from the server. Returns the reply code. */ 
     private int parseReply(String reply) { 
         StringTokenizer replyTokens = new StringTokenizer(reply);
-        String replyCodeString = replyTokens.nextToken(); // Get the first token 
-        int replyCode = Integer.parseInt(replyCodeString); // Convert in to an Integer
+        int replyCode = 0;
+        // Try to parse the responce code
+        try {
+            replyCode = Integer.parseInt(replyTokens.nextToken());
+        }
+        catch (Exception e) {
+            // There was an error in reading the code.
+            return -1;
+        }
+        // Return server responce
         return replyCode;
     } 
 
