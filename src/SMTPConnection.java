@@ -11,9 +11,9 @@ public class SMTPConnection {
     private Socket connection; 
 
     /* Streams for reading and writing the socket */ 
+    private Socket serverSocket;
     private BufferedReader fromServer; 
-    //private DataOutputStream toServer; 
-    private PrintStream toServer; 
+    private DataOutputStream toServer; 
     private String server = "smtp.tcnj.edu";
     private int portNumber = 25;
     private String hostname = "hostname"; // Change to proper hostname
@@ -30,14 +30,10 @@ public class SMTPConnection {
 
         // Attempt to connect to the server
         try {
-//        serverSocket = new Socket (server, portNumber); 
-//        fromServer = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()));
-//        toServer = new DataOutputStream(serverSocket.getOutputStream());
-          // Temporary for troubleshooting
-          fromServer = new BufferedReader(new InputStreamReader(System.in)); 
-          toServer = System.out; 
+            serverSocket = new Socket (server, portNumber); 
+            fromServer = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()));
         }
-        catch (Exception e) {
+        catch (IOException e) {
             throw e;
         }
 
@@ -107,8 +103,7 @@ public class SMTPConnection {
         command += CRLF;
         
         // Send the command to the server
-//        toServer.writeBytes(command);
-        toServer.print(command);
+        toServer.writeBytes(command);
 
         // Get the reply code
         String reply = fromServer.readLine();
