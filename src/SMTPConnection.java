@@ -1,3 +1,7 @@
+// Edited by Gary Patricelli
+// On or about 04/08/2014
+// For CSC 360 
+
 import java.net.*; 
 import java.io.*; 
 import java.util.*; 
@@ -11,7 +15,6 @@ public class SMTPConnection {
     private Socket connection; 
 
     /* Streams for reading and writing the socket */ 
-    private Socket serverSocket;
     private BufferedReader fromServer; 
     private DataOutputStream toServer; 
     private String server = "smtp.tcnj.edu";
@@ -30,8 +33,9 @@ public class SMTPConnection {
 
         // Attempt to connect to the server
         try {
-            serverSocket = new Socket (server, portNumber); 
-            fromServer = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()));
+            connection = new Socket (server, portNumber); 
+            fromServer = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            toServer = new DataOutputStream(connection.getOutputStream());
         }
         catch (IOException e) {
             throw e;
@@ -43,12 +47,9 @@ public class SMTPConnection {
         if (replyCode != 220) {
             throw new IOException();
         }
-
-        /* SMTP handshake. We need the name of the local machine. 
-           Send the appropriate SMTP handshake command. */ 
         
         String localhost = hostname; 
-        sendCommand(("HELO " + localhost + CRLF), 250); 
+        sendCommand(("HELO " + localhost), 250); 
         isConnected = true; 
     } 
 
@@ -56,16 +57,13 @@ public class SMTPConnection {
        correct order. No checking for errors, just throw them to the 
        caller. */ 
     public void send(Envelope envelope) throws IOException { 
-        /* Send all the necessary commands to send a message. Call 
-           sendCommand() to do the dirty work. Do _not_ catch the 
-           exception thrown from sendCommand(). */ 
         
         // Sender line
-        sendCommand(("MAIL FROM: " + envelope.Sender), 250);
+        sendCommand("MAIL FROM: " + envelope.Sender, 250);
         // Recipient
         sendCommand(("RCPT TO: " + envelope.Recipient), 250);
         // Data segment
-        sendCommand(("DATA" + CRLF), 354);
+        sendCommand("DATA", 354);
 
         // Message body
         String messageBody;
@@ -76,7 +74,7 @@ public class SMTPConnection {
         // Add data from message
         messageBody += envelope.Message.Body;
         // Clear out the body
-        messageBody += CRLF + "." + CRLF;
+        messageBody += CRLF + ".";
         // Finally, send the body...
         sendCommand(messageBody, 250);
     } 
@@ -87,7 +85,7 @@ public class SMTPConnection {
         isConnected = false; 
         try { 
             sendCommand("QUIT", 221); 
-            // connection.close(); 
+            connection.close(); 
         } catch (IOException e) { 
             System.out.println("Unable to close connection: " + e); 
             isConnected = true; 
@@ -98,7 +96,6 @@ public class SMTPConnection {
        what is is supposed to be according to RFC 821. */ 
     private void sendCommand(String command, int rc) throws IOException { 
 
-        System.out.println("Sending " + command);
         // Add the carridge return + line feed
         command += CRLF;
         
@@ -107,6 +104,7 @@ public class SMTPConnection {
 
         // Get the reply code
         String reply = fromServer.readLine();
+
         // Parse the responce code
         int replyCode = parseReply(reply);
 
